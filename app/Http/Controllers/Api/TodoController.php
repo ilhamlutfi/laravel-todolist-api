@@ -62,7 +62,26 @@ class TodoController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $todo = Todo::find($id);
+
+        if ($todo == null) {
+            return response()->json([
+                'message' => 'Todo Not Found',
+            ], 404);
+        } else {
+            $request->validate([
+                'title' => 'required|min:3|max:255',
+                'description' => 'required|min:3|max:255',
+                'completed' => 'required|in:0,1',
+            ]);
+
+            $todo->update($request->all());
+
+            return response()->json([
+                'message' => 'Todo Updated Sucessfully',
+                'data' => new TodoResource($todo)
+            ]);
+        }
     }
 
     /**
