@@ -35,7 +35,7 @@ class TodoController extends Controller
         return response()->json([
             'message' => 'Todo Created Sucessfully',
             'data' => new TodoResource($todo)
-        ]);
+        ], 201);
     }
 
     /**
@@ -89,6 +89,18 @@ class TodoController extends Controller
      */
     public function destroy(string $id)
     {
-        //
+        $todo = Todo::find($id);
+
+        if ($todo == null) {
+            return response()->json([
+                'message' => 'Todo Not Found',
+            ], 404);
+        }
+
+        $todo->delete();
+
+        return response()->json([
+            'message' => 'Todo Deleted Sucessfully',
+        ]);
     }
 }
