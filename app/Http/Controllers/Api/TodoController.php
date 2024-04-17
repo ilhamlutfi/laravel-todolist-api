@@ -30,7 +30,7 @@ class TodoController extends Controller
             'completed' => 'required|in:0,1',
         ]);
 
-        $todo = Todo::create($request->toArray());
+        $todo = Todo::create($request->all());
 
         return response()->json([
             'message' => 'Todo Created Sucessfully',
@@ -43,7 +43,18 @@ class TodoController extends Controller
      */
     public function show(string $id)
     {
-        //
+        $todo = Todo::find($id);
+
+        if ($todo == null) {
+            return response()->json([
+                'message' => 'Todo Not Found',
+            ], 404);
+        }
+
+        return response()->json([
+            'message' => 'Todo Retrieved Successfully',
+            'data' => new TodoResource($todo)
+        ]);
     }
 
     /**
