@@ -1,8 +1,11 @@
 <?php
 
-namespace App\Http\Controllers;
+namespace App\Http\Controllers\Api;
 
+use App\Models\Todo;
 use Illuminate\Http\Request;
+use App\Http\Controllers\Controller;
+use App\Http\Resources\TodoResource;
 
 class TodoController extends Controller
 {
@@ -11,7 +14,9 @@ class TodoController extends Controller
      */
     public function index()
     {
-        //
+        $todolist = Todo::latest()->get();
+
+        return TodoResource::collection($todolist);
     }
 
     /**
@@ -19,7 +24,18 @@ class TodoController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'title' => 'required|min:3|max:255',
+            'description' => 'required|min:3|max:255',
+            'completed' => 'required|in:0,1',
+        ]);
+
+        $todo = Todo::create($request->toArray());
+
+        return response()->json([
+            'message' => 'Todo Created Sucessfully',
+            'data' => new TodoResource($todo)
+        ]);
     }
 
     /**
