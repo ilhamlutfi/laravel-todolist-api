@@ -7,9 +7,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TodoResource;
 use Exception;
-// use App\Models\Log;
+use App\Models\Log as LogModel;
 use Illuminate\Support\Facades\Log;
-use Throwable;
 
 class TodoController extends Controller
 {
@@ -18,12 +17,12 @@ class TodoController extends Controller
      */
     public function index()
     {
-        // Log::record(auth()->user(), 'Accessed Todo List', 'GET');
 
         try {
             $todolist = Todo::latest()->get();
             Log::channel('stack')->info("Accessed Todo List");
             Log::channel('slack')->info("Accessed Todo List");
+            LogModel::record(auth()->user(), 'Accessed Todo List', 'GET');
         } catch (Exception $error) {
             Log::channel('stack')->error("Failed : ", ['message' => $error->getMessage()]);
             Log::channel('slack')->error("Failed : ", ['message' => $error->getMessage()]);
@@ -43,12 +42,24 @@ class TodoController extends Controller
             'completed' => 'required|in:0,1',
         ]);
 
-        $todo = Todo::create($request->all());
+        try {
+            $todo = Todo::create($request->all());
+            Log::channel('stack')->info("Todo List Created");
+            Log::channel('slack')->info("Todo List Created");
+            LogModel::record(auth()->user(), 'Todo List Created', 'POST');
 
-        return response()->json([
-            'message' => 'Todo Created Sucessfully',
-            'data' => new TodoResource($todo)
-        ], 201);
+            return response()->json([
+                'message' => 'Todo Created Sucessfully',
+                'data' => new TodoResource($todo)
+            ], 201);
+        } catch (Exception $error) {
+            Log::channel('stack')->error("Failed : ", ['message' => $error->getMessage()]);
+            Log::channel('slack')->error("Failed : ", ['message' => $error->getMessage()]);
+
+            return response()->json([
+                'message' => 'Failed To Create Todo',
+            ], 500);
+        }
     }
 
     /**
@@ -59,15 +70,24 @@ class TodoController extends Controller
         $todo = Todo::find($id);
 
         if ($todo == null) {
+            Log::channel('stack')->warning("Todo List Not Found");
+            Log::channel('slack')->warning("Todo List Not Found");
+            LogModel::record(auth()->user(), 'Todo List Not Found', 'GET');
+
             return response()->json([
                 'message' => 'Todo Not Found',
             ], 404);
+        } else {
+            Log::channel('stack')->info("Todo Retrieved Successfully");
+            Log::channel('slack')->info("Todo Retrieved Successfully");
+
+            LogModel::record(auth()->user(), 'Todo Retrieved Successfully', 'GET');
+            return response()->json([
+                'message' => 'Todo Retrieved Successfully',
+                'data' => new TodoResource($todo)
+            ]);
         }
 
-        return response()->json([
-            'message' => 'Todo Retrieved Successfully',
-            'data' => new TodoResource($todo)
-        ]);
     }
 
     /**
@@ -78,6 +98,10 @@ class TodoController extends Controller
         $todo = Todo::find($id);
 
         if ($todo == null) {
+            Log::channel('stack')->warning("Todo List For Edit Not Found");
+            Log::channel('slack')->warning("Todo List For Edit Not Found");
+            LogModel::record(auth()->user(), 'Todo List For Edit Not Found', 'GET');
+
             return response()->json([
                 'message' => 'Todo Not Found',
             ], 404);
@@ -88,12 +112,28 @@ class TodoController extends Controller
                 'completed' => 'required|in:0,1',
             ]);
 
-            $todo->update($request->all());
+            try {
+                $todo->update($request->all());
 
-            return response()->json([
-                'message' => 'Todo Updated Sucessfully',
-                'data' => new TodoResource($todo)
-            ]);
+                Log::channel('stack')->info("Todo List Updated");
+                Log::channel('slack')->info("Todo List Updated");
+                LogModel::record(auth()->user(), 'Todo List Updated', 'PUT');
+
+                return response()->json([
+                    'message' => 'Todo Updated Sucessfully',
+                    'data' => new TodoResource($todo)
+                ]);
+            } catch (Exception $error) {
+                Log::channel('stack')->error("Failed : ", ['message' => $error->getMessage()]);
+                Log::channel('slack')->error("Failed : ", ['message' => $error->getMessage()]);
+                LogModel::record(auth()->user(), 'Todo List Failed Updated', 'PUT');
+
+                return response()->json([
+                    'message' => 'Todo List Failed Updated',
+                ]);
+            }
+
+
         }
     }
 
@@ -105,15 +145,36 @@ class TodoController extends Controller
         $todo = Todo::find($id);
 
         if ($todo == null) {
+            Log::channel('stack')->info("Todo List For Delete Not Found");
+            Log::channel('slack')->info("Todo List For Delete Not Found");
+            LogModel::record(auth()->user(), 'Todo List For Delete Not Found', 'GET');
+
             return response()->json([
                 'message' => 'Todo Not Found',
             ], 404);
+        } else {
+
+
+            try {
+                $todo->delete();
+
+                Log::channel('stack')->info("Todo List Deleted");
+                Log::channel('slack')->info("Todo List Deleted");
+                LogModel::record(auth()->user(), 'Todo List Deleted', 'DELETE');
+
+                return response()->json([
+                    'message' => 'Todo Deleted Sucessfully',
+                ]);
+            } catch (Exception $error) {
+                Log::channel('stack')->error("Failed : ", ['message' => $error->getMessage()]);
+                Log::channel('slack')->error("Failed : ", ['message' => $error->getMessage()]);
+                LogModel::record(auth()->user(), 'Todo List Failed Deleted', 'DELETE');
+
+                return response()->json([
+                    'message' => 'Todo List Failed Deleted',
+                ]);
+            }
         }
 
-        $todo->delete();
-
-        return response()->json([
-            'message' => 'Todo Deleted Sucessfully',
-        ]);
     }
 }
