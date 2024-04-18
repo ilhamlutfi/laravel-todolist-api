@@ -6,6 +6,10 @@ use App\Models\Todo;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TodoResource;
+use Exception;
+// use App\Models\Log;
+use Illuminate\Support\Facades\Log;
+use Throwable;
 
 class TodoController extends Controller
 {
@@ -14,7 +18,16 @@ class TodoController extends Controller
      */
     public function index()
     {
-        $todolist = Todo::latest()->get();
+        // Log::record(auth()->user(), 'Accessed Todo List', 'GET');
+
+        try {
+            $todolist = Todo::latest()->get();
+            Log::channel('stack')->info("Accessed Todo List");
+            Log::channel('slack')->info("Accessed Todo List");
+        } catch (Exception $error) {
+            Log::channel('stack')->error("Failed : ", ['message' => $error->getMessage()]);
+            Log::channel('slack')->error("Failed : ", ['message' => $error->getMessage()]);
+        }
 
         return TodoResource::collection($todolist);
     }
