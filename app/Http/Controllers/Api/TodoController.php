@@ -34,33 +34,33 @@ class TodoController extends Controller
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
-    {
-        $request->validate([
-            'title' => 'required|min:3|max:255',
-            'description' => 'required|min:3|max:255',
-            'completed' => 'required|in:0,1',
-        ]);
+public function store(Request $request)
+{
+    $request->validate([
+        'title' => 'required|min:3|max:255',
+        'description' => 'required|min:3|max:255',
+        'completed' => 'required|in:0,1',
+    ]);
 
-        try {
-            $todo = Todo::create($request->all());
-            Log::channel('stack')->info("Todo List Created");
-            Log::channel('slack')->info("Todo List Created");
-            LogModel::record(auth()->user(), 'Todo List Created', 'POST');
+    try {
+        $todo = Todo::create($request->all());
+        Log::channel('stack')->info("Todo List Created");
+        Log::channel('slack')->info("Todo List Created");
+        LogModel::record(auth()->user(), 'Todo List Created', 'POST');
 
-            return response()->json([
-                'message' => 'Todo Created Sucessfully',
-                'data' => new TodoResource($todo)
-            ], 201);
-        } catch (Exception $error) {
-            Log::channel('stack')->error("Failed : ", ['message' => $error->getMessage()]);
-            Log::channel('slack')->error("Failed : ", ['message' => $error->getMessage()]);
+        return response()->json([
+            'message' => 'Todo Created Sucessfully',
+            'data' => new TodoResource($todo)
+        ], 201);
+    } catch (Exception $error) {
+        Log::channel('stack')->error("Failed : ", ['message' => $error->getMessage()]);
+        Log::channel('slack')->error("Failed : ", ['message' => $error->getMessage()]);
 
-            return response()->json([
-                'message' => 'Failed To Create Todo',
-            ], 500);
-        }
+        return response()->json([
+            'message' => 'Failed To Create Todo',
+        ], 500);
     }
+}
 
     /**
      * Display the specified resource.
@@ -145,8 +145,8 @@ class TodoController extends Controller
         $todo = Todo::find($id);
 
         if ($todo == null) {
-            Log::channel('stack')->info("Todo List For Delete Not Found");
-            Log::channel('slack')->info("Todo List For Delete Not Found");
+            Log::channel('stack')->warning("Todo List For Delete Not Found");
+            Log::channel('slack')->warning("Todo List For Delete Not Found");
             LogModel::record(auth()->user(), 'Todo List For Delete Not Found', 'GET');
 
             return response()->json([
